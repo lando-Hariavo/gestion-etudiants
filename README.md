@@ -1,2 +1,2 @@
 # gestion-etudiants
-This is for my promotion HARIAVO
+This is for promotion HARIAVO's payment
