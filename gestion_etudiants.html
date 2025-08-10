@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestionnaire d’étudiants</title>
+  <style>
+    /* Reset & base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+    }
+
+    form {
+      background: white;
+      padding: 1.2rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    form input[type="text"],
+    form input[type="number"] {
+      flex: 1 1 150px;
+      padding: 0.6rem 1rem;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    form input[type="text"]:focus,
+    form input[type="number"]:focus {
+      border-color: #4e8ef7;
+      outline: none;
+      box-shadow: 0 0 8px rgba(78,142,247,0.3);
+    }
+
+    form button {
+      background-color: #4e8ef7;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.65rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      flex: 0 0 auto;
+      box-shadow: 0 4px 10px rgba(78,142,247,0.4);
+      transition: background-color 0.3s ease;
+    }
+    form button:hover {
+      background-color: #3b6fd1;
+    }
+
+    table {
+      width: 100%;
+      max-width: 800px;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+      background: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead tr {
+      background: #4e8ef7;
+      color: white;
+      text-align: left;
+      font-weight: 700;
+      font-size: 1rem;
+      user-select: none;
+    }
+
+    th, td {
+      padding: 12px 20px;
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-radius: 12px;
+      transition: background-color 0.2s ease;
+    }
+    tbody tr:hover {
+      background-color: #f5faff;
+    }
+
+    tbody td {
+      border-bottom: none !important;
+    }
+
+    /* Bouton supprimer */
+    .btn-delete {
+      background-color: #ff6b6b;
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(255,107,107,0.5);
+      transition: background-color 0.25s ease;
+      font-size: 0.9rem;
+    }
+    .btn-delete:hover {
+      background-color: #e54e4e;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      form {
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+      form input[type="text"],
+      form input[type="number"],
+      form button {
+        width: 100%;
+        flex: none;
+      }
+      table {
+        font-size: 0.9rem;
+      }
+      thead tr {
+        font-size: 0.85rem;
+      }
+      th, td {
+        padding: 8px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestionnaire d’étudiants</h1>
+
+  <form id="student-form" autocomplete="off">
+    <input type="text" id="nom" placeholder="Nom et prénom" required />
+    <input type="text" id="matricule" placeholder="Matricule" required />
+    <input type="number" id="montant" placeholder="Montant (Ar)" min="0" required />
+    <button type="submit">Ajouter</button>
+  </form>
+
+  <table aria-label="Liste des étudiants">
+    <thead>
+      <tr>
+        <th>Nom et prénom</th>
+        <th>Matricule</th>
+        <th>Montant (Ar)</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="student-list">
+      <!-- Lignes ajoutées dynamiquement -->
+    </tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('student-form');
+    const studentList = document.getElementById('student-list');
+
+    // Charger les données sauvegardées
+    let students = JSON.parse(localStorage.getItem('students')) || [];
+
+    function saveStudents() {
+      localStorage.setItem('students', JSON.stringify(students));
+    }
+
+    function renderStudents() {
+      studentList.innerHTML = '';
+      students.forEach((student, index) => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${student.nom}</td>
+          <td>${student.matricule}</td>
+          <td>${student.montant.toLocaleString('fr-FR')} Ar</td>
+          <td>
+            <button class="btn-delete" aria-label="Supprimer ${student.nom}">Supprimer</button>
+          </td>
+        `;
+
+        tr.querySelector('.btn-delete').addEventListener('click', () => {
+          if (confirm(`Supprimer ${student.nom} ?`)) {
+            students.splice(index, 1);
+            saveStudents();
+            renderStudents();
+          }
+        });
+
+        studentList.appendChild(tr);
+      });
+
+      if (students.length === 0) {
+        studentList.innerHTML = `
+          <tr><td colspan="4" style="text-align:center; color:#888; padding: 20px;">Aucun étudiant enregistré.</td></tr>
+        `;
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const nom = form.nom.value.trim();
+      const matricule = form.matricule.value.trim();
+      const montant = Number(form.montant.value);
+
+      if (!nom || !matricule || isNaN(montant) || montant < 0) {
+        alert("Veuillez remplir correctement tous les champs.");
+        return;
+      }
+
+      students.push({ nom, matricule, montant });
+      saveStudents();
+      renderStudents();
+
+      form.reset();
+      form.nom.focus();
+    });
+
+    // Initial render
+    renderStudents();
+  </script>
+
+</body>
+</html>
